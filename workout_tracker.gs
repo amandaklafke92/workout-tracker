@@ -1125,6 +1125,12 @@ function setupExercisesTab(ss) {
   sh.getRange(1, 1, 1, header.length)
     .setValues([header])
     .setBackground('#1a1a2e').setFontColor('#ffffff').setFontWeight('bold').setFontSize(11);
+  sh.getRange('A1').setNote(
+    'The muscle credits (columns C onward) are evidence-informed estimates, not gospel: ' +
+    '1 = primary mover, 0.5 = significant secondary contributor. Edit any value (0–1) if you ' +
+    'disagree with an allocation or train a variation differently — Set Volume recalculates ' +
+    'from whatever is in this tab. Add your own exercises as new rows.'
+  );
 
   const rows = _parseExerciseLibrary();
   if (rows.length > 0) sh.getRange(2, 1, rows.length, header.length).setValues(rows);

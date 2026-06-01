@@ -76,6 +76,11 @@ Muscle, then one column per muscle group (fractional contribution 0–1), Source
   contributes zero volume to Set Volume.
 - Ships pre-filled with ~35 exercises. Add your own by copying the row pattern: name, primary
   muscle, and a 0–1 value under each muscle the lift trains.
+- **You can (and should) edit the credits.** The muscle allocations are *evidence-informed
+  estimates*, not gospel — `1` = primary mover, `0.5` = significant secondary contributor.
+  If you disagree with how an exercise is allocated, or you train a variation differently
+  (e.g. a more stretched or lengthened-partial style), just change the numbers. Set Volume
+  recalculates from whatever you put here.
 - This tab is the source of truth for both the Set Volume calculation and the Swap dropdowns.
 
 ### Mesos

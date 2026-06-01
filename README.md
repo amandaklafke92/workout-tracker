@@ -224,10 +224,12 @@ exercise name. If the Log says `Leg extension` but the Exercises tab says `Leg E
 that exercise contributes **zero** volume. Pick names from the dropdowns where possible, and
 keep the Exercises tab in sync with what you actually log. (Trailing spaces count too.)
 
-**Add your own exercises.** The starter library has ~35 exercises. To add one, put a new row
-in the Exercises tab: the name, its primary muscle, and a fractional contribution (0–1) for
-each muscle it trains (e.g. a row might put `1` under Quads and `0.5` under Glutes). See the
-existing rows for the pattern.
+**Add your own exercises — and edit the credits.** The starter library has ~35 exercises. To
+add one, put a new row in the Exercises tab: the name, its primary muscle, and a fractional
+contribution (0–1) for each muscle it trains (e.g. a row might put `1` under Quads and `0.5`
+under Glutes). And the existing muscle credits are *evidence-informed estimates, not gospel* —
+if you disagree with how an exercise is allocated, just change the numbers. Set Volume
+recalculates from whatever's in this tab.
 
 **Don't split one session across two dates.** The auto-load and Ref tab find your *most
 recent date* for a session type. If a single session spans two calendar days, log it all
