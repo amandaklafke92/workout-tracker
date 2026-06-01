@@ -1,0 +1,37 @@
+Exercise,Primary Muscle,Chest,Front Delts,Side Delts,Rear Delts,Upper Back,Lats,Upper Traps,Serratus,Biceps,Triceps,Forearms,Abs,Obliques,Lower Back,Neck,Glutes,Quads,Hamstrings,Adductors,Abductors,Calves,Tibialis,Source
+Assisted pull-ups (neutral-grip),Lats,,,,0.5,,1,,,1,,0.5,,,,,,,,,,,,MF
+Assisted pull-ups (neutral-grip; band: purple),Lats,,,,0.5,,1,,,1,,0.5,,,,,,,,,,,,MF
+Back squats (bb; elevated),Quads,,,,,,,,,,,,,,0.5,,1,1,,1,,,,MF
+Back squats (bb),Glutes,,,,,,,,,,,,,,0.5,,1,1,,1,,,,MF
+Bench press (bb; close-grip),Chest,1,0.5,,,,,,,,1,,,,,,,,,,,,,MF
+Bicep curl (cables; seated),Biceps,,,,,,,,,1,,,,,,,,,,,,,,MF
+Bicep curl (bb),Biceps,,,,,,,,,1,,,,,,,,,,,,,,MF
+Bicep curl (db; seated),Biceps,,,,,,,,,1,,,,,,,,,,,,,,MF
+Bulgarian split squats (db; contralateral; glute-focused),Glutes,,,,,,,,,,,0.5,,,,,1,0.5,,1,0.5,,,MF
+Chest press (bb),Chest,1,0.5,,,,,,,,0.5,,,,,,,,,,,,,MF
+Chest press (machine; plate-loaded),Chest,1,0.5,,,,,,,,0.5,,,,,,,,,,,,,MF
+Conventional deadlift (bb),Glutes,,,,,0.5,,,,,,0.5,,,0.5,,1,0.5,1,1,,,,MF
+Hamstring curl (lying),Hamstrings,,,,,,,,,,,,,,,,,,1,0.5,,0.5,,MF
+Hamstring curl (seated),Hamstrings,,,,,,,,,,,,,,,,,,1,0.5,,0.5,,MF
+Hip abduction (machine; forward; pin-loaded),Glutes,,,,,,,,,,,,,,,,1,,,,1,,,MF
+Hip abduction (machine; upright; pin-loaded),Glutes,,,,,,,,,,,,,,,,1,,,,1,,,MF
+Hip abduction (machine; single-leg; pin-loaded),Glutes,,,,,,,,,,,,,,,,1,,,,1,,,MF
+Hip adduction (pin-loaded),Glutes,,,,,,,,,,,,,,,,,,,1,,,,MF
+Hip thrust (machine; plate-loaded; belt),Glutes,,,,,,,,,,,,,,,,1,0.5,,,,,,MF
+Lat pulldown (neutral; close-grip),Lats,,,,0.5,0.5,1,,,1,,0.5,,,,,,,,,,,,MF
+Lateral raise (machine; seated),Side Delts,,0.5,1,,,,0.5,,,,,,,,,,,,,,,,MF
+Lateral raise (machine; single-arm; seated),Side Delts,,0.5,1,,,,0.5,,,,,,,,,,,,,,,,MF
+Lateral raise (machine; single-arm; standing),Side Delts,,0.5,1,,,,0.5,,,,,,,,,,,,,,,,MF
+Lateral raise (db; single-arm; standing),Side Delts,,0.5,1,,,,0.5,,,,,,,,,,,,,,,,MF
+Lateral raise (cables; in front of body),Side Delts,,,1,,,,,,,,,,,,,,,,,,,,MF
+Lateral raise (db; leaning; seated),Side Delts,,0.5,1,,,,0.5,,,,,,,,,,,,,,,,MF
+Leg extension,Quads,,,,,,,,,,,,,,,,,1,,,,,,MF
+Leg press (single-leg; side),Glutes,,,,,,,,,,,,,,,,1,0.5,,,,,,MF
+Low incline press (db),Chest,1,0.5,,,,,,,,0.5,,,,,,,,,,,,,MF
+Meadow row,Upper Back,,,,1,1,,,,0.5,,0.5,,,,,,,,,,,,MF
+Overhead tricep extension (mid pulley; straight bar),Triceps,,,,,,,,,,1,,,,,,,,,,,,,MF
+Pull-ups (neutral-grip),Lats,,,,0.5,0.5,1,,,1,,0.5,,,,,,,,,,,,MF
+Rear delt fly (machine; sideways),Rear Delts,,,,1,0.5,,0.5,,,,,,,,,,,,,,,,MF
+Shoulder press (db; seated),Side Delts,,1,1,,,,0.5,0.5,,0.5,,,,,,,,,,,,,MF
+T-bar row (chest-supported; overhand-grip),Upper Back,,,,1,1,1,0.5,,0.5,,0.5,,,,,,,,,,,,MF
+Triceps extension (seated; plate-loaded),Triceps,0.5,0.5,,,,,0.3,,0.3,1,0.3,,,,,,,,,,,,MF

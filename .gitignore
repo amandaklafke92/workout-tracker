@@ -1,0 +1,17 @@
+# macOS
+.DS_Store
+
+# Credentials / secrets — never commit these
+token.json
+credentials.json
+*.pem
+.env
+
+# Local spreadsheet exports / personal data
+*.xlsx
+*.xls
+
+# Editor / tooling
+.vscode/
+.idea/
+node_modules/
