@@ -11,7 +11,7 @@
 //
 // setupWorkoutTracker() builds all 10 tabs from scratch:
 //   Today        — log each session (input)
-//   Ref          — read-only view of the last session for the current type
+//   Ref          — read-only grid: one session's week-by-week progression this meso
 //   Log          — permanent append-only record of every set
 //   Programs     — saved session templates per meso (drives prefill)
 //   Exercises    — exercise library with fractional muscle allocations (pre-filled)
@@ -160,6 +160,7 @@ function onOpen() {
     .addItem('Refresh Set Volume', 'refreshSetVolume')
     .addItem('Setup Set Volume Targets', 'setupSetVolumeTargets')
     .addItem('Refresh Best Lifts', 'refreshBestLifts')
+    .addItem('Refresh Ref', 'refreshRef')
     .addSeparator()
     .addItem('Set up triggers (run once)', 'setupTrigger')
     .addToUi();
@@ -211,6 +212,7 @@ function handleEdit(e) {
     } else if (range.getColumn() === 2 && range.getRow() >= 1 && range.getRow() <= 5 &&
                _isSessionRow(sheet, range.getRow())) {
       loadLastSession();
+      _syncRefToToday(e.source);
     }
   }
   if (sheet.getName() === 'Set Volume' && range.getA1Notation() === 'B2' && e.value === 'TRUE') {
@@ -220,6 +222,14 @@ function handleEdit(e) {
   if (sheet.getName() === 'Best Lifts' && range.getA1Notation() === 'E2' && e.value === 'TRUE') {
     refreshBestLifts();
     sheet.getRange('E2').setValue(false);
+  }
+  if (sheet.getName() === 'Ref') {
+    if (range.getA1Notation() === 'B1') {
+      refreshRef();
+    } else if (range.getA1Notation() === 'E1' && e.value === 'TRUE') {
+      refreshRef();
+      sheet.getRange('E1').setValue(false);
+    }
   }
 }
 
@@ -553,6 +563,9 @@ function saveToLog() {
   } catch (err) {
     Logger.log('Program-update dialog skipped (no UI context?): %s', err);
   }
+
+  // Keep Ref pointed at (and showing) the session just logged.
+  try { _syncRefToToday(ss); } catch (err) { Logger.log('Ref refresh skipped: %s', err); }
 }
 
 // ── UPDATE SCHEMA (run on existing sheet to apply v3 changes) ─────────────────
@@ -611,34 +624,8 @@ function updateSchema() {
   today.setColumnWidth(8, 150); // Swap
   today.setFrozenRows(6);
 
-  // ── Ref tab ────────────────────────────────────────────────────────────────
-  ref.getRange('A5:F5')
-    .setValues([['Exercise', 'Set', 'Type', 'Weight (kg)', 'Reps', 'RIR']])
-    .setBackground('#cccccc').setFontWeight('bold').setFontSize(12);
-
-  ref.getRange('A4:F4').merge()
-    .setValue('LAST SESSION — REFERENCE ONLY')
-    .setBackground('#444444').setFontColor('#ffffff')
-    .setFontWeight('bold').setFontSize(12).setHorizontalAlignment('center');
-
-  ref.getRange('A6:F60').clearContent();
-  ref.getRange('A6').setFormula(
-    "=IFERROR(" +
-      "FILTER(Log!D:I," +
-        "Log!B:B='Today'!B2," +
-        "Log!A:A=MAXIFS(Log!A:A,Log!B:B,'Today'!B2)" +
-      ")," +
-      "\"No previous session - add data to Log first\"" +
-    ")"
-  );
-
-  ref.setColumnWidth(1, 180);
-  ref.setColumnWidth(2, 50);
-  ref.setColumnWidth(3, 60);
-  ref.setColumnWidth(4, 95);
-  ref.setColumnWidth(5, 60);
-  ref.setColumnWidth(6, 50);
-  ref.setFrozenRows(5);
+  // ── Ref tab (meso-history grid) ──────────────────────────────────────────────
+  setupRefTab(ss);
 
   SpreadsheetApp.getUi().alert(
     'Today & Ref tabs rebuilt.\n\n' +
@@ -650,21 +637,9 @@ function updateSchema() {
 // ── FIX REF ───────────────────────────────────────────────────────────────────
 
 function fixRef() {
-  const ss  = SpreadsheetApp.getActiveSpreadsheet();
-  const ref = ss.getSheetByName('Ref');
-  if (!ref) { SpreadsheetApp.getUi().alert('Ref tab not found.'); return; }
-
-  ref.getRange('A6:F60').clearContent();
-  ref.getRange('A6').setFormula(
-    "=IFERROR(" +
-      "FILTER(Log!D:I," +
-        "Log!B:B='Today'!B2," +
-        "Log!A:A=MAXIFS(Log!A:A,Log!B:B,'Today'!B2)" +
-      ")," +
-      "\"No previous session - add data to Log first\"" +
-    ")"
-  );
-  SpreadsheetApp.getUi().alert('Ref formula updated.');
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  setupRefTab(ss);
+  SpreadsheetApp.getUi().alert('Ref tab rebuilt (meso-history grid).');
 }
 
 // ── SETUP PROGRAMS TAB (run this on your existing sheet instead of updateSchema) ──
@@ -754,47 +729,7 @@ function setupWorkoutTracker() {
   today.setFrozenRows(6);
 
   // ── Ref ────────────────────────────────────────────────────────────────────
-  let ref = ss.getSheetByName('Ref');
-  if (!ref) ref = ss.insertSheet('Ref');
-  else ref.clear();
-
-  ref.getRange('A1:B1').setValues([['Session', '']]);
-  ref.getRange('B1').setFormula("='Today'!B2").setFontSize(12).setFontWeight('bold');
-  ref.getRange('A1').setFontSize(12).setFontWeight('bold');
-
-  ref.getRange('A2:B2').setValues([['Last session', '']]);
-  ref.getRange('B2').setFormula(
-    "=IFERROR(TEXT(MAXIFS(Log!A:A,Log!B:B,'Today'!B2),\"d mmm yyyy\"),\"None yet\")"
-  );
-  ref.getRange('A2:B2').setFontSize(11);
-
-  ref.getRange('A4:F4').merge()
-    .setValue('LAST SESSION — REFERENCE ONLY')
-    .setBackground('#444444').setFontColor('#ffffff')
-    .setFontWeight('bold').setFontSize(12).setHorizontalAlignment('center');
-
-  ref.getRange('A5:F5')
-    .setValues([['Exercise', 'Set', 'Type', 'Weight (kg)', 'Reps', 'RIR']])
-    .setBackground('#cccccc').setFontWeight('bold').setFontSize(12);
-
-  ref.getRange('A6').setFormula(
-    "=IFERROR(" +
-      "FILTER(Log!D:I," +
-        "Log!B:B='Today'!B2," +
-        "Log!A:A=MAXIFS(Log!A:A,Log!B:B,'Today'!B2)" +
-      ")," +
-      "\"No previous session - add data to Log first\"" +
-    ")"
-  );
-  ref.getRange('A6:F60').setFontSize(13);
-
-  ref.setColumnWidth(1, 180);
-  ref.setColumnWidth(2, 50);
-  ref.setColumnWidth(3, 60);
-  ref.setColumnWidth(4, 95);
-  ref.setColumnWidth(5, 60);
-  ref.setColumnWidth(6, 50);
-  ref.setFrozenRows(5);
+  const ref = setupRefTab(ss);
 
   // ── Log ────────────────────────────────────────────────────────────────────
   let log = ss.getSheetByName('Log');
@@ -1455,4 +1390,151 @@ function applySessionTypes() {
   if (log)      log.getRange('B2:B5000').setDataValidation(rule);
   if (programs) programs.getRange('B2:B5000').setDataValidation(rule);
   ss.toast('Session dropdowns updated from the Settings tab.', 'Done', 3);
+}
+
+// ── REF TAB: MESO-HISTORY GRID ────────────────────────────────────────────────
+// Ref is a read-only VIEW computed from the Log. It shows ONE session type's
+// week-by-week progression across the CURRENT meso: rows = Exercise·Set·Type,
+// columns = each week with data, cells = weight×reps. See prds/spec_ref-meso-history.md.
+//
+// Controls (row 1): B1 = session selector (auto-follows Today, overridable);
+// E1 = refresh checkbox. Grid: row 3 title, row 4 headers, rows 5+ data.
+
+function setupRefTab(ss) {
+  let ref = ss.getSheetByName('Ref');
+  if (!ref) ref = ss.insertSheet('Ref');
+  else ref.clear();
+
+  ref.getRange('A1').setValue('Session').setFontWeight('bold').setFontSize(12);
+  const today = ss.getSheetByName('Today');
+  const defaultSession = today ? String(today.getRange('B2').getValue()).trim() : '';
+  ref.getRange('B1').setValue(defaultSession).setFontWeight('bold').setFontSize(12)
+     .setNote('Which session to show. Auto-follows Today; change it to browse another.');
+  ref.getRange('D1').setValue('↻ Refresh').setFontWeight('bold').setHorizontalAlignment('right');
+  ref.getRange('E1').insertCheckboxes().setNote('Tick to rebuild the grid from the Log');
+
+  ref.setColumnWidth(1, 200);  // Exercise
+  ref.setColumnWidth(2, 55);   // Set
+  ref.setColumnWidth(3, 55);   // Type
+  for (let c = 4; c <= 16; c++) ref.setColumnWidth(c, 78); // week columns
+
+  refreshRef();
+  return ref;
+}
+
+// Set Ref's session dropdown (B1) options to the distinct sessions present in the
+// Log (self-populating; allowInvalid so a never-logged session is still accepted).
+function _applyRefSessionDropdown(ref, log) {
+  const data = log.getDataRange().getValues();
+  const seen = {}, sessions = [];
+  for (let i = 1; i < data.length; i++) {
+    const s = String(data[i][1]).trim();
+    if (s && !(s in seen)) { seen[s] = true; sessions.push(s); }
+  }
+  if (sessions.length === 0) return;
+  sessions.sort();
+  ref.getRange('B1').setDataValidation(
+    SpreadsheetApp.newDataValidation().requireValueInList(sessions, true).setAllowInvalid(true).build()
+  );
+}
+
+// Rebuild the Ref grid for the session in B1 across the current meso.
+function refreshRef() {
+  const ss  = SpreadsheetApp.getActiveSpreadsheet();
+  const ref = ss.getSheetByName('Ref');
+  const log = ss.getSheetByName('Log');
+  if (!ref || !log) return;
+  const tz = Session.getScriptTimeZone();
+
+  // Session selector — default to Today's if blank.
+  let session = String(ref.getRange('B1').getValue()).trim();
+  const today = ss.getSheetByName('Today');
+  if (!session && today) {
+    session = String(today.getRange('B2').getValue()).trim();
+    if (session) ref.getRange('B1').setValue(session);
+  }
+
+  _applyRefSessionDropdown(ref, log);
+
+  // Clear the grid display area (row 3 down) before redrawing.
+  ref.getRange('A3:T300').clearContent();
+  if (!session) { ref.getRange('A3').setValue('Pick a session in B1.'); return; }
+
+  // Current meso: today within a Mesos Start–End range.
+  // Mesos cols: 0 Meso, 1 Start, 2 Weeks, 3 End (auto).
+  const mesos = ss.getSheetByName('Mesos');
+  let mesoName = '', mStart = null, mEnd = null;
+  if (mesos && mesos.getLastRow() >= 2) {
+    const now = new Date(); now.setHours(0, 0, 0, 0);
+    const md = mesos.getDataRange().getValues();
+    for (let i = 1; i < md.length; i++) {
+      if (!md[i][0] || !(md[i][1] instanceof Date) || !(md[i][3] instanceof Date)) continue;
+      const sd = new Date(md[i][1]), ed = new Date(md[i][3]);
+      if (now >= sd && now <= ed) { mesoName = String(md[i][0]).trim(); mStart = sd; mEnd = ed; break; }
+    }
+  }
+  if (!mStart) { ref.getRange('A3').setValue('Not currently in a meso — set one in the Mesos tab.'); return; }
+
+  // Filter Log → build grid. Log cols: 0 Date,1 Session,2 Week,3 Exercise,4 Set,5 Type,6 Weight,7 Reps.
+  const data = log.getDataRange().getValues();
+  const byKey = {}, keyOrder = [], weekDates = {};
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    if (!row[0]) continue;
+    const d = new Date(row[0]);
+    if (d < mStart || d > mEnd) continue;
+    if (String(row[1]).trim() !== session) continue;
+    if (String(row[5]).trim().toUpperCase() === 'WU') continue;
+    const week = Number(row[2]);
+    const ex = String(row[3]).trim();
+    if (!week || !ex) continue;
+    const key = ex + '|||' + row[4] + '|||' + String(row[5]).trim();
+    if (!(key in byKey)) { byKey[key] = { exercise: ex, set: row[4], type: String(row[5]).trim(), weeks: {} }; keyOrder.push(key); }
+    const cell = row[6] + '×' + row[7];
+    const prev = byKey[key].weeks[week];
+    if (!prev || d >= prev.date) byKey[key].weeks[week] = { val: cell, date: d };
+    if (!weekDates[week] || d >= weekDates[week]) weekDates[week] = d;
+  }
+  const weeks = Object.keys(weekDates).map(Number).sort((a, b) => a - b);
+
+  // Title + headers.
+  const fmt = dt => Utilities.formatDate(dt, tz, 'd MMM yyyy');
+  ref.getRange('A3').setValue('MESO HISTORY — ' + session + '  |  ' + mesoName + '  (' + fmt(mStart) + ' → ' + fmt(mEnd) + ')')
+     .setFontWeight('bold').setFontSize(12);
+  const header = ['Exercise', 'Set', 'Type'].concat(weeks.map(w => 'Wk ' + w + '\n' + Utilities.formatDate(weekDates[w], tz, 'd MMM')));
+  ref.getRange(4, 1, 1, header.length).setValues([header]).setBackground('#cccccc').setFontWeight('bold');
+  ref.setFrozenRows(4);
+
+  if (keyOrder.length === 0) { ref.getRange('A5').setValue('No sessions logged yet for ' + session + ' in this meso.'); return; }
+
+  // Sort: exercises in first-appearance order; sets ascending then type within each.
+  const exSeen = {};
+  keyOrder.forEach(k => { const ex = byKey[k].exercise; if (!(ex in exSeen)) exSeen[ex] = Object.keys(exSeen).length; });
+  const sorted = keyOrder.slice().sort((a, b) => {
+    const ka = byKey[a], kb = byKey[b];
+    if (exSeen[ka.exercise] !== exSeen[kb.exercise]) return exSeen[ka.exercise] - exSeen[kb.exercise];
+    const sa = Number(ka.set), sb = Number(kb.set);
+    if (sa !== sb) return (isNaN(sa) ? 0 : sa) - (isNaN(sb) ? 0 : sb);
+    return String(ka.type).localeCompare(String(kb.type));
+  });
+
+  let lastEx = null;
+  const out = sorted.map(k => {
+    const o = byKey[k];
+    const exCell = (o.exercise === lastEx) ? '' : o.exercise;
+    lastEx = o.exercise;
+    return [exCell, o.set, o.type].concat(weeks.map(w => o.weeks[w] ? o.weeks[w].val : '—'));
+  });
+  ref.getRange(5, 1, out.length, header.length).setValues(out);
+  ss.toast('Ref updated — ' + session + ' / ' + mesoName, 'Done', 3);
+}
+
+// Point Ref at Today's current session and rebuild (used when Today's Session
+// changes or a session is saved). Programmatic writes don't re-trigger onEdit.
+function _syncRefToToday(ss) {
+  const ref = ss.getSheetByName('Ref');
+  const today = ss.getSheetByName('Today');
+  if (!ref || !today) return;
+  ref.getRange('B1').setValue(String(today.getRange('B2').getValue()).trim());
+  refreshRef();
 }

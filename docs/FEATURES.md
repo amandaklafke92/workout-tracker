@@ -50,12 +50,21 @@ saved program (triggers an update prompt on save).
 
 ### Ref
 
-Reference view of the last logged session for the current session type. Auto-updates via
-formula — read only.
+A read-only **meso-history grid**: one session type's week-by-week progression across the
+current meso. Rows = Exercise · Set · Type; columns = each week with data (`Wk 1`, `Wk 2`…
+with the session date); cells = `weight×reps` (`—` if not done that week). Computed from the
+Log — never hand-edit; refreshing only redraws it.
 
-> **Known limitation:** Ref currently shows only the *last* session of the current type. A
-> fuller per-meso history view is a possible future improvement. The Log is the complete
-> record in the meantime.
+- **B1 — Session selector:** which session type the grid shows. **Auto-follows Today's
+  Session** (so it's already right when you sit down to log), but you can change it to browse
+  another session; it re-syncs next time Today's Session changes. Options self-populate from
+  the sessions in your Log.
+- **Meso:** the current one (auto-detected from today's date via the Mesos tab). Between mesos
+  it shows empty.
+- **Refresh:** auto on session change and after a save; or tick the E1 checkbox / Workout →
+  Refresh Ref.
+- Includes all set types **except WU**; excludes RIR.
+- Design spec: `prds/spec_ref-meso-history.md`.
 
 ### Exercises
 

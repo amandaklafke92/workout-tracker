@@ -33,7 +33,7 @@ any walled, proprietary app will give you.
 | Tab | What it's for |
 |-----|---------------|
 | **Today** | Where you log each session. Pick a session type and it loads your last one to beat. |
-| **Ref** | Read-only view of your last session of the current type. |
+| **Ref** | Read-only grid: your week-by-week progression for a session, this meso. |
 | **Log** | Permanent, append-only record of every set. Never edit by hand. |
 | **Programs** | Saved session templates per training block — drives the auto pre-fill. |
 | **Exercises** | The exercise library: each exercise mapped to the muscles it trains (pre-filled with ~35 to start). |
@@ -235,9 +235,10 @@ under one date, or you'll only see half of it next time.
 **The checkbox does nothing?** You probably skipped **Workout → Set up triggers (run once)**,
 or didn't reload the sheet after setup. Do that step and try again.
 
-**Known limitation — the Ref tab** shows only your *last* session of the current type, via a
-formula. A fuller "whole-block history" view is a possible future improvement; for now the
-Log tab is the complete record.
+**The Ref tab** shows the **week-by-week progression** for one session type across your
+current meso (a grid: exercises down, weeks across, `weight×reps` in each cell). It follows
+Today's Session automatically and refreshes after you save; you can also point its **B1**
+selector at a different session to browse, or use **Workout → Refresh Ref**.
 
 ---
 
@@ -248,7 +249,7 @@ Log tab is the complete record.
   It does **not** wipe an existing Log. *(Note: re-running clears the Mesos/Set Volume/Best
   Lifts layouts, so it's mainly for a fresh sheet.)*
 - **`updateSchema`** — rebuilds just the Today and Ref tabs (use after editing the script).
-- **`fixRef`** — repairs the Ref formula only.
+- **`fixRef`** — rebuilds the Ref tab (the meso-history grid) only.
 
 ---
 
