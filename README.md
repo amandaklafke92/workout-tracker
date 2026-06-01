@@ -18,7 +18,7 @@ leaving your Google Drive.
 
 This isn't a coaching app that writes the program for you. Best suited to: 
 
-- **Intermediate lifters** you know your split and your exercises, and want to track and analyse.
+- **Intermediate lifters:** you know your split and your exercises, and want to track and analyse.
 - **People who'd rather not pay a subscription** for a workout tracker.
 - **People who don't mind looking at spreadsheets**
 
