@@ -28,12 +28,15 @@ any walled, proprietary app will give you.
 > **Why I built it:** I'm sick of paying subscriptions for everything. I just need a system that makes it easy to log my workouts and run analysis on my data the way that **I** want. 
 ---
 
-## What you get: the 10 tabs
+## What you get: the 11 tabs
+
+Tabs are **colour-coded by type** — the **Start Here** tab has the key.
 
 | Tab | What it's for |
 |-----|---------------|
+| **Start Here** | Orientation + the tab-colour key (what each tab is for). |
 | **Today** | Where you log each session. Pick a session type and it loads your last one to beat. |
-| **Ref** | Read-only grid: your week-by-week progression for a session, this meso. |
+| **Progress** | Read-only grid: your week-by-week progression for a session, this meso. |
 | **Log** | Permanent, append-only record of every set. Never edit by hand. |
 | **Programs** | Saved session templates per training block — drives the auto pre-fill. |
 | **Exercises** | The exercise library: each exercise mapped to the muscles it trains (pre-filled with ~35 to start). |

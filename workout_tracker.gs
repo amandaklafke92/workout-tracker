@@ -9,9 +9,10 @@
 //      "Set up triggers (run once)".
 // That's it — see README.md for the full walkthrough.
 //
-// setupWorkoutTracker() builds all 10 tabs from scratch:
+// setupWorkoutTracker() builds all 11 tabs from scratch (colour-coded by type;
+// see the Start Here tab for the key):
 //   Today        — log each session (input)
-//   Ref          — read-only grid: one session's week-by-week progression this meso
+//   Progress     — read-only grid: one session's week-by-week progression this meso
 //   Log          — permanent append-only record of every set
 //   Programs     — saved session templates per meso (drives prefill)
 //   Exercises    — exercise library with fractional muscle allocations (pre-filled)
@@ -20,10 +21,11 @@
 //   Volume Guide — static MEV/MAV/MRV reference (pre-filled)
 //   Best Lifts   — all-time PRs for a user-chosen set of exercises
 //   Settings     — your session types (training split); edit to your own days
+//   Start Here   — orientation + the tab-colour key
 //
-// Re-running setupWorkoutTracker() rebuilds Today/Ref and rewrites the reference
+// Re-running setupWorkoutTracker() rebuilds Today/Progress and rewrites the reference
 // tabs; the Log is only created if missing, never wiped. updateSchema() refreshes
-// just the Today/Ref tabs on an existing sheet.
+// just the Today/Progress tabs on an existing sheet.
 //
 // ── COLUMN REFERENCE ─────────────────────────────────────────────────────────
 // Log:      A=Date, B=Session, C=Week, D=Exercise, E=Set, F=Type, G=Weight(kg),
@@ -151,8 +153,7 @@ function onOpen() {
     .addItem('Save Today → Log', 'saveToLog')
     .addItem('Load Last Session', 'loadLastSession')
     .addSeparator()
-    .addItem('Setup Today & Ref', 'updateSchema')
-    .addItem('Fix Ref', 'fixRef')
+    .addItem('Setup Today & Progress', 'updateSchema')
     .addItem('Setup Programs Tab', 'setupProgramsTab')
     .addItem('Setup Workout Tracker', 'setupWorkoutTracker')
     .addItem('Apply Session Types (from Settings)', 'applySessionTypes')
@@ -160,7 +161,7 @@ function onOpen() {
     .addItem('Refresh Set Volume', 'refreshSetVolume')
     .addItem('Setup Set Volume Targets', 'setupSetVolumeTargets')
     .addItem('Refresh Best Lifts', 'refreshBestLifts')
-    .addItem('Refresh Ref', 'refreshRef')
+    .addItem('Refresh Progress', 'refreshProgress')
     .addSeparator()
     .addItem('Set up triggers (run once)', 'setupTrigger')
     .addToUi();
@@ -212,7 +213,7 @@ function handleEdit(e) {
     } else if (range.getColumn() === 2 && range.getRow() >= 1 && range.getRow() <= 5 &&
                _isSessionRow(sheet, range.getRow())) {
       loadLastSession();
-      _syncRefToToday(e.source);
+      _syncProgressToToday(e.source);
     }
   }
   if (sheet.getName() === 'Set Volume' && range.getA1Notation() === 'B2' && e.value === 'TRUE') {
@@ -223,11 +224,11 @@ function handleEdit(e) {
     refreshBestLifts();
     sheet.getRange('E2').setValue(false);
   }
-  if (sheet.getName() === 'Ref') {
+  if (sheet.getName() === 'Progress') {
     if (range.getA1Notation() === 'B1') {
-      refreshRef();
+      refreshProgress();
     } else if (range.getA1Notation() === 'E1' && e.value === 'TRUE') {
-      refreshRef();
+      refreshProgress();
       sheet.getRange('E1').setValue(false);
     }
   }
@@ -564,8 +565,8 @@ function saveToLog() {
     Logger.log('Program-update dialog skipped (no UI context?): %s', err);
   }
 
-  // Keep Ref pointed at (and showing) the session just logged.
-  try { _syncRefToToday(ss); } catch (err) { Logger.log('Ref refresh skipped: %s', err); }
+  // Keep Progress pointed at (and showing) the session just logged.
+  try { _syncProgressToToday(ss); } catch (err) { Logger.log('Progress refresh skipped: %s', err); }
 }
 
 // ── UPDATE SCHEMA (run on existing sheet to apply v3 changes) ─────────────────
@@ -575,10 +576,10 @@ function saveToLog() {
 function updateSchema() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const today = ss.getSheetByName('Today');
-  const ref   = ss.getSheetByName('Ref');
+  const ref   = ss.getSheetByName('Progress');
 
   if (!today || !ref) {
-    SpreadsheetApp.getUi().alert('Today or Ref tab not found.');
+    SpreadsheetApp.getUi().alert('Today or Progress tab not found.');
     return;
   }
 
@@ -624,11 +625,11 @@ function updateSchema() {
   today.setColumnWidth(8, 150); // Swap
   today.setFrozenRows(6);
 
-  // ── Ref tab (meso-history grid) ──────────────────────────────────────────────
-  setupRefTab(ss);
+  // ── Progress tab (meso-history grid) ─────────────────────────────────────────
+  setupProgressTab(ss);
 
   SpreadsheetApp.getUi().alert(
-    'Today & Ref tabs rebuilt.\n\n' +
+    'Today & Progress tabs rebuilt.\n\n' +
     'Reminder: make sure Log column F is labelled "Type".\n\n' +
     'Today: Meso / Session / Week / Date at top (rows 1–4), then Exercise / Set / Type / Weight / Reps / RIR / Notes (row 7+).'
   );
@@ -636,10 +637,10 @@ function updateSchema() {
 
 // ── FIX REF ───────────────────────────────────────────────────────────────────
 
-function fixRef() {
+function rebuildProgressTab() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  setupRefTab(ss);
-  SpreadsheetApp.getUi().alert('Ref tab rebuilt (meso-history grid).');
+  setupProgressTab(ss);
+  SpreadsheetApp.getUi().alert('Progress tab rebuilt (meso-history grid).');
 }
 
 // ── SETUP PROGRAMS TAB (run this on your existing sheet instead of updateSchema) ──
@@ -728,8 +729,8 @@ function setupWorkoutTracker() {
   today.setColumnWidth(8, 150); // Swap
   today.setFrozenRows(6);
 
-  // ── Ref ────────────────────────────────────────────────────────────────────
-  const ref = setupRefTab(ss);
+  // ── Progress ─────────────────────────────────────────────────────────────────
+  const ref = setupProgressTab(ss);
 
   // ── Log ────────────────────────────────────────────────────────────────────
   let log = ss.getSheetByName('Log');
@@ -769,26 +770,30 @@ function setupWorkoutTracker() {
   const setVolume   = setupSetVolumeTab(ss);
   const volumeGuide = setupVolumeGuideTab(ss);
   const bestLifts   = setupBestLiftsTab(ss);
+  const startHere   = setupStartHereTab(ss);
 
-  // ── Tab order ──────────────────────────────────────────────────────────────
-  ss.setActiveSheet(today);       ss.moveActiveSheet(1);
-  ss.setActiveSheet(ref);         ss.moveActiveSheet(2);
-  ss.setActiveSheet(log);         ss.moveActiveSheet(3);
-  ss.setActiveSheet(programs);    ss.moveActiveSheet(4);
-  ss.setActiveSheet(exercises);   ss.moveActiveSheet(5);
-  ss.setActiveSheet(mesos);       ss.moveActiveSheet(6);
-  ss.setActiveSheet(setVolume);   ss.moveActiveSheet(7);
-  ss.setActiveSheet(volumeGuide); ss.moveActiveSheet(8);
-  ss.setActiveSheet(bestLifts);   ss.moveActiveSheet(9);
-  ss.setActiveSheet(settings);    ss.moveActiveSheet(10);
+  // ── Tab order (Start Here first) ────────────────────────────────────────────
+  ss.setActiveSheet(startHere);   ss.moveActiveSheet(1);
+  ss.setActiveSheet(today);       ss.moveActiveSheet(2);
+  ss.setActiveSheet(ref);         ss.moveActiveSheet(3);
+  ss.setActiveSheet(log);         ss.moveActiveSheet(4);
+  ss.setActiveSheet(programs);    ss.moveActiveSheet(5);
+  ss.setActiveSheet(exercises);   ss.moveActiveSheet(6);
+  ss.setActiveSheet(mesos);       ss.moveActiveSheet(7);
+  ss.setActiveSheet(setVolume);   ss.moveActiveSheet(8);
+  ss.setActiveSheet(volumeGuide); ss.moveActiveSheet(9);
+  ss.setActiveSheet(bestLifts);   ss.moveActiveSheet(10);
+  ss.setActiveSheet(settings);    ss.moveActiveSheet(11);
+
+  applyTabColours();
 
   const defaultSheet = ss.getSheetByName('Sheet1');
   if (defaultSheet && ss.getSheets().length > 1) ss.deleteSheet(defaultSheet);
 
-  ss.setActiveSheet(today);
+  ss.setActiveSheet(startHere);
   SpreadsheetApp.getUi().alert(
-    'Setup complete! All 10 tabs are ready:\n\n' +
-    'Today · Ref · Log · Programs · Exercises · Mesos · Set Volume · Volume Guide · Best Lifts · Settings\n\n' +
+    'Setup complete! All 11 tabs are ready (colour-coded — see the Start Here tab):\n\n' +
+    'Start Here · Today · Progress · Log · Programs · Exercises · Mesos · Set Volume · Volume Guide · Best Lifts · Settings\n\n' +
     'Next steps:\n' +
     '1. On the Settings tab, replace the example session types (Push/Pull/Legs) with your own.\n' +
     '2. Reload the sheet, then run Workout > "Set up triggers (run once)".'
@@ -1111,6 +1116,7 @@ function refreshBestLifts() {
 // applySwapDropdowns() (cols A/B) expect — do not change those readers.
 
 function setupExercisesTab(ss) {
+  ss = ss || SpreadsheetApp.getActiveSpreadsheet();
   let sh = ss.getSheetByName('Exercises');
   if (!sh) sh = ss.insertSheet('Exercises');
   else sh.clear();
@@ -1138,6 +1144,7 @@ function setupExercisesTab(ss) {
 // the Log to the [Start Date (B), End Date (D)] range.
 
 function setupMesosTab(ss) {
+  ss = ss || SpreadsheetApp.getActiveSpreadsheet();
   let sh = ss.getSheetByName('Mesos');
   if (!sh) sh = ss.insertSheet('Mesos');
   else sh.clear();
@@ -1176,6 +1183,7 @@ function setupMesosTab(ss) {
 // and the muscle list from rows 5+, then writes results into C5 onward.
 
 function setupSetVolumeTab(ss) {
+  ss = ss || SpreadsheetApp.getActiveSpreadsheet();
   let sh = ss.getSheetByName('Set Volume');
   if (!sh) sh = ss.insertSheet('Set Volume');
   else sh.clear();
@@ -1234,6 +1242,7 @@ function setupSetVolumeTab(ss) {
 // Static MEV/MAV/MRV reference, pre-filled from VOLUME_GUIDE_DATA. Read-only.
 
 function setupVolumeGuideTab(ss) {
+  ss = ss || SpreadsheetApp.getActiveSpreadsheet();
   let sh = ss.getSheetByName('Volume Guide');
   if (!sh) sh = ss.insertSheet('Volume Guide');
   else sh.clear();
@@ -1282,6 +1291,7 @@ function setupVolumeGuideTab(ss) {
 // user-picked exercises (dropdown from Exercises); refreshBestLifts fills B–H.
 
 function setupBestLiftsTab(ss) {
+  ss = ss || SpreadsheetApp.getActiveSpreadsheet();
   let sh = ss.getSheetByName('Best Lifts');
   if (!sh) sh = ss.insertSheet('Best Lifts');
   else sh.clear();
@@ -1333,6 +1343,7 @@ function setupBestLiftsTab(ss) {
 // yours.
 
 function setupSettingsTab(ss) {
+  ss = ss || SpreadsheetApp.getActiveSpreadsheet();
   let sh = ss.getSheetByName('Settings');
   const isNew = !sh;
   if (!sh) sh = ss.insertSheet('Settings');
@@ -1392,17 +1403,18 @@ function applySessionTypes() {
   ss.toast('Session dropdowns updated from the Settings tab.', 'Done', 3);
 }
 
-// ── REF TAB: MESO-HISTORY GRID ────────────────────────────────────────────────
-// Ref is a read-only VIEW computed from the Log. It shows ONE session type's
+// ── PROGRESS TAB: MESO-HISTORY GRID ───────────────────────────────────────────
+// Progress is a read-only VIEW computed from the Log. It shows ONE session type's
 // week-by-week progression across the CURRENT meso: rows = Exercise·Set·Type,
 // columns = each week with data, cells = weight×reps. See prds/spec_ref-meso-history.md.
 //
 // Controls (row 1): B1 = session selector (auto-follows Today, overridable);
 // E1 = refresh checkbox. Grid: row 3 title, row 4 headers, rows 5+ data.
 
-function setupRefTab(ss) {
-  let ref = ss.getSheetByName('Ref');
-  if (!ref) ref = ss.insertSheet('Ref');
+function setupProgressTab(ss) {
+  ss = ss || SpreadsheetApp.getActiveSpreadsheet();
+  let ref = ss.getSheetByName('Progress');
+  if (!ref) ref = ss.insertSheet('Progress');
   else ref.clear();
 
   ref.getRange('A1').setValue('Session').setFontWeight('bold').setFontSize(12);
@@ -1418,13 +1430,13 @@ function setupRefTab(ss) {
   ref.setColumnWidth(3, 55);   // Type
   for (let c = 4; c <= 16; c++) ref.setColumnWidth(c, 78); // week columns
 
-  refreshRef();
+  refreshProgress();
   return ref;
 }
 
-// Set Ref's session dropdown (B1) options to the distinct sessions present in the
+// Set Progress's session dropdown (B1) options to the distinct sessions present in the
 // Log (self-populating; allowInvalid so a never-logged session is still accepted).
-function _applyRefSessionDropdown(ref, log) {
+function _applyProgressSessionDropdown(ref, log) {
   const data = log.getDataRange().getValues();
   const seen = {}, sessions = [];
   for (let i = 1; i < data.length; i++) {
@@ -1438,10 +1450,10 @@ function _applyRefSessionDropdown(ref, log) {
   );
 }
 
-// Rebuild the Ref grid for the session in B1 across the current meso.
-function refreshRef() {
+// Rebuild the Progress grid for the session in B1 across the current meso.
+function refreshProgress() {
   const ss  = SpreadsheetApp.getActiveSpreadsheet();
-  const ref = ss.getSheetByName('Ref');
+  const ref = ss.getSheetByName('Progress');
   const log = ss.getSheetByName('Log');
   if (!ref || !log) return;
   const tz = Session.getScriptTimeZone();
@@ -1454,7 +1466,7 @@ function refreshRef() {
     if (session) ref.getRange('B1').setValue(session);
   }
 
-  _applyRefSessionDropdown(ref, log);
+  _applyProgressSessionDropdown(ref, log);
 
   // Clear the grid display area (row 3 down) before redrawing.
   ref.getRange('A3:T300').clearContent();
@@ -1526,15 +1538,87 @@ function refreshRef() {
     return [exCell, o.set, o.type].concat(weeks.map(w => o.weeks[w] ? o.weeks[w].val : '—'));
   });
   ref.getRange(5, 1, out.length, header.length).setValues(out);
-  ss.toast('Ref updated — ' + session + ' / ' + mesoName, 'Done', 3);
+  ss.toast('Progress updated — ' + session + ' / ' + mesoName, 'Done', 3);
 }
 
-// Point Ref at Today's current session and rebuild (used when Today's Session
+// Point Progress at Today's current session and rebuild (used when Today's Session
 // changes or a session is saved). Programmatic writes don't re-trigger onEdit.
-function _syncRefToToday(ss) {
-  const ref = ss.getSheetByName('Ref');
+function _syncProgressToToday(ss) {
+  const ref = ss.getSheetByName('Progress');
   const today = ss.getSheetByName('Today');
   if (!ref || !today) return;
   ref.getRange('B1').setValue(String(today.getRange('B2').getValue()).trim());
-  refreshRef();
+  refreshProgress();
+}
+
+// ── TAB COLOURS + START HERE KEY ──────────────────────────────────────────────
+// Tabs are grouped by type via tab colour (safe — colour can't affect data).
+// The Start Here tab holds the legend. Both are editor-runnable (no-arg).
+
+// Maps each tab to its type's colour. Single source of truth for the colour key.
+const TAB_COLOURS = {
+  'Today':        '#34a853', // Entry
+  'Log':          '#5f6368', // Record
+  'Progress':     '#1a73e8', // Report
+  'Set Volume':   '#1a73e8',
+  'Best Lifts':   '#1a73e8',
+  'Settings':     '#f9ab00', // Setup
+  'Mesos':        '#f9ab00',
+  'Programs':     '#f9ab00',
+  'Exercises':    '#a142f4', // Reference
+  'Volume Guide': '#a142f4'
+};
+
+function applyTabColours() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  for (const name in TAB_COLOURS) {
+    const sh = ss.getSheetByName(name);
+    if (sh) sh.setTabColor(TAB_COLOURS[name]);
+  }
+  ss.toast('Tab colours applied.', 'Done', 3);
+}
+
+// Builds the "Start Here" orientation tab: what each tab is for, colour-keyed by
+// type. Read-only; additive (only writes to its own tab).
+function setupStartHereTab(ss) {
+  ss = ss || SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName('Start Here');
+  if (!sh) sh = ss.insertSheet('Start Here');
+  else sh.clear();
+
+  sh.getRange('A1:C1').merge()
+    .setValue('🏋️  WORKOUT TRACKER — START HERE')
+    .setBackground('#1a1a2e').setFontColor('#ffffff').setFontWeight('bold').setFontSize(13);
+  sh.getRange('A2:C2').merge()
+    .setValue('Every tab has a job, and tabs are colour-coded by type:')
+    .setFontStyle('italic');
+
+  sh.getRange('A4:C4').setValues([['Type', 'Tabs', 'What you do here']])
+    .setBackground('#cccccc').setFontWeight('bold');
+
+  // [label, tab-colour, tabs, what-you-do]
+  const rows = [
+    ['✏️ Entry',     '#34a853', 'Today',                             'Log your sessions here'],
+    ['🔒 Record',    '#5f6368', 'Log',                               "Permanent record — don't edit by hand"],
+    ['🔄 Report',    '#1a73e8', 'Progress · Set Volume · Best Lifts', 'Auto-generated, read-only — use Refresh'],
+    ['⚙️ Setup',     '#f9ab00', 'Settings · Mesos · Programs',        'Configure your tracker'],
+    ['📖 Reference', '#a142f4', 'Exercises · Volume Guide',           'Lookup info you consult']
+  ];
+  rows.forEach((r, i) => {
+    const row = 5 + i;
+    sh.getRange(row, 1).setValue(r[0]).setBackground(r[1]).setFontColor('#ffffff').setFontWeight('bold');
+    sh.getRange(row, 2).setValue(r[2]);
+    sh.getRange(row, 3).setValue(r[3]);
+  });
+
+  sh.getRange(5 + rows.length + 1, 1, 1, 3).merge()
+    .setValue('New here? Full setup + how-to in the README: github.com/amandaklafke92/workout-tracker')
+    .setFontStyle('italic');
+
+  sh.setColumnWidth(1, 110);
+  sh.setColumnWidth(2, 240);
+  sh.setColumnWidth(3, 300);
+  sh.setFrozenRows(4);
+  sh.setTabColor('#1a1a2e');
+  return sh;
 }

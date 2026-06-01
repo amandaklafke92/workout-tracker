@@ -48,7 +48,7 @@ Stores the template structure for each session within each meso. Columns: Meso, 
 Exercise, Set, Type. Used to pre-fill Today and to detect if today's session differs from the
 saved program (triggers an update prompt on save).
 
-### Ref
+### Progress
 
 A read-only **meso-history grid**: one session type's week-by-week progression across the
 current meso. Rows = Exercise · Set · Type; columns = each week with data (`Wk 1`, `Wk 2`…
