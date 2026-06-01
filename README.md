@@ -16,28 +16,19 @@ leaving your Google Drive.
 
 ## Who it's for
 
-This is best suited to someone who **already has a training program** and wants a way to run
-reports and analysis on their training data — not a coaching app that writes the program for
-you. In practice that means:
+This isn't a coaching app that writes the program for you. Best suited to: 
 
-- **Intermediate lifters** more than beginners — you know your split and your exercises, and
-  you want to track and analyse, not be told what to do.
-- **People who'd rather not pay a subscription** for workout tracking.
-- **People who don't mind opening a spreadsheet mid-workout** — there's no slick mobile app
-  here, just a sheet that works on your phone.
+- **Intermediate lifters** you know your split and your exercises, and want to track and analyse.
+- **People who'd rather not pay a subscription** for a workout tracker.
+- **People who don't mind looking at spreadsheets**
 
-The payoff is **you own the data**. It's just rows in a spreadsheet, so you can run whatever
-reports and charts you want on it. And if you give an AI assistant access to the sheet, you
-can ask it specific questions about your own training history.
+It's just rows in a spreadsheet, but you can share the file with an AI agent and get deeper insights than
+any walled, proprietary app will give you.
 
-> **Why I built it:** I'd been logging workouts in MacroFactor — the best of everything I'd
-> tried (I'd also done Google Sheets with a very different structure, pen and paper, and
-> Renaissance Periodization). But I was tired of paying for subscriptions, and I don't need a
-> fancy UI — so I built something I fully own and can analyse however I like.
-
+> **Why I built it:** I'm sick of paying subscriptions for everything. I just need a system that makes it easy to log my workouts and run analysis on my data the way that **I** want. 
 ---
 
-## What you get — the 10 tabs
+## What you get: the 10 tabs
 
 | Tab | What it's for |
 |-----|---------------|
@@ -56,24 +47,23 @@ Full per-tab detail is in [`docs/FEATURES.md`](docs/FEATURES.md).
 
 ---
 
-## Is it safe to run?
+## Is it safe?
 
-Fair question — you're about to paste code into your Google account and approve permissions.
-Some honest points:
+A question you should be asking if you're going to paste code into your Google account and approve permissions.
+Things to know:
 
 - **It makes no network calls and sends no data anywhere.** The script only uses Google's
-  built-in Sheets tools to build and manage *this one spreadsheet* — there are no web
+  built-in Sheets tools to build and manage *this one spreadsheet*. There are no web
   requests, no email, no access to your other files. Everything stays in your Google Drive.
-  *(Don't believe me? Search the file for `UrlFetchApp` — there isn't one.)*
-- **The Google permission screen looks scary, and that's normal.** "Google hasn't verified
+  *(Don't believe me? Search the file for `UrlFetchApp`—there isn't one.)*
+- **The Google permission screen looks scary but it's normal.** "Google hasn't verified
   this app" just means it's a personal script you pasted yourself, not a published add-on
   Google has reviewed. You're granting your own script access to your own sheet.
-- **Don't just take my word for it — check it.** Read the file, ask a developer friend, or
+- **But don't just take my word for it.** Read the file, ask a developer friend, or
   paste it into an AI assistant and ask: *"This is a Google Apps Script I'm about to run on
-  my own spreadsheet — does it do anything besides build and manage that sheet? Any network
-  calls or data leaving my account?"* An AI review is a handy sanity check — one useful
-  layer, not a guaranteed security audit. (Cloned the whole repo? You can point an AI at the
-  folder and ask how any part of it works, too.)
+  my own spreadsheet—does it do anything besides build and manage that sheet? Any network
+  calls or data leaving my account?"* Cloned the whole repo? You can point an AI at the
+  folder and ask how any part of it works, too.
 
 ---
 
