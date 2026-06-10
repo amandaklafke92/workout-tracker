@@ -154,6 +154,9 @@ function onOpen() {
     .addItem('Load Last Session', 'loadLastSession')
     .addSeparator()
     .addItem('Setup Today & Progress', 'updateSchema')
+    .addItem('Add Session Energy + Notes', 'addSessionMetadata')
+    .addItem('Add Pending exercises', 'addPendingExercises')          // [pending]
+    .addItem('Setup: Pending + Skip', 'setupPendingFeature')          // [pending]
     .addItem('Setup Programs Tab', 'setupProgramsTab')
     .addItem('Setup Workout Tracker', 'setupWorkoutTracker')
     .addItem('Apply Session Types (from Settings)', 'applySessionTypes')
@@ -165,6 +168,8 @@ function onOpen() {
     .addSeparator()
     .addItem('Set up triggers (run once)', 'setupTrigger')
     .addToUi();
+
+  try { _pendingOnOpen(); } catch (e) {}   // [pending] lapse + indicator + toast on open
 }
 
 // Simple trigger — handles dropdown only (no dialogs needed here).
@@ -210,6 +215,9 @@ function handleEdit(e) {
     if (range.getA1Notation() === 'D4' && e.value === 'TRUE') {
       saveToLog();
       sheet.getRange('D4').setValue(false);
+    } else if (range.getA1Notation() === 'G3' && e.value === 'TRUE') {   // [pending] add-pending checkbox
+      addPendingExercises();
+      sheet.getRange('G3').setValue(false);
     } else if (range.getColumn() === 2 && range.getRow() >= 1 && range.getRow() <= 5 &&
                _isSessionRow(sheet, range.getRow())) {
       loadLastSession();
@@ -426,6 +434,11 @@ function loadLastSession() {
   todaySheet.getRange('B3').setValue(getNextWeekForSession(logSheet, sessionType));
   applySwapDropdowns(todaySheet);
 
+  // Pre-session energy + notes are per-session — clear them on every session change
+  // so a stale rating/note can't carry into the next workout. No-op if absent.
+  todaySheet.getRange('G1').clearContent();
+  todaySheet.getRange('G2:H2').clearContent();
+
   const existing = todaySheet.getRange('A7:A200').getValues().flat().filter(v => v !== '');
   if (existing.length > 0) return;
 
@@ -494,6 +507,110 @@ function _loadFromLog(todaySheet, logSheet, sessionType) {
     .toast(`Loaded ${cleanRows.length} sets from last ${sessionType} (${dateStr}) — no program found`, 'Session loaded', 4);
 }
 
+// ── SESSION METADATA (pre-session energy + notes) ─────────────────────────────
+// One row per session in a "Sessions" tab, keyed by Date + Session. Inputs live
+// in the Today header (G1 = energy dropdown, G2 = notes) and save on the same D4
+// tick as the sets. Kept out of the per-set Log so the data has a clean home and
+// joins back to Log on Date + Session for analysis (energy stored as "3 – Okay",
+// so the leading digit parses for correlation, the word stays readable).
+
+const ENERGY_OPTIONS = ['1 – Drained', '2 – Flat', '3 – Okay', '4 – Good', '5 – Primed'];
+
+// Build (or refresh) the Sessions tab. Idempotent; safe on an existing sheet.
+function _setupSessionsTab(ss) {
+  let sh = ss.getSheetByName('Sessions');
+  if (!sh) sh = ss.insertSheet('Sessions');
+  if (sh.getLastRow() === 0) {
+    sh.getRange('A1:E1')
+      .setValues([['Date', 'Session', 'Week', 'Energy', 'Notes']])
+      .setBackground('#1a1a2e').setFontColor('#ffffff')
+      .setFontWeight('bold').setFontSize(11);
+    sh.setFrozenRows(1);
+  }
+  sh.getRange('A2:A5000').setNumberFormat('ddd d MMM yyyy');
+  sh.setColumnWidth(1, 130);
+  sh.setColumnWidth(2, 70);
+  sh.setColumnWidth(3, 55);
+  sh.setColumnWidth(4, 110);
+  sh.setColumnWidth(5, 360);
+  return sh;
+}
+
+// Add the pre-session energy dropdown (G1) and notes cell (G2) to the Today
+// header, with right-aligned labels. Idempotent — breakApart before merge so it
+// can run on an already-set-up sheet without throwing.
+function _applySessionMetaInputs(today) {
+  const energyValidation = SpreadsheetApp.newDataValidation()
+    .requireValueInList(ENERGY_OPTIONS, true)
+    .setAllowInvalid(false)
+    .build();
+
+  today.getRange('C1:F1').breakApart();
+  today.getRange('C1:F1').merge()
+    .setValue('Pre-session energy →')
+    .setFontWeight('bold').setFontSize(11)
+    .setFontColor('#5f6368').setHorizontalAlignment('right');
+  today.getRange('G1')
+    .setDataValidation(energyValidation)
+    .setNote('How you feel coming in — saved with the session');
+
+  today.getRange('C2:F2').breakApart();
+  today.getRange('C2:F2').merge()
+    .setValue('Session notes →')
+    .setFontWeight('bold').setFontSize(11)
+    .setFontColor('#5f6368').setHorizontalAlignment('right');
+  today.getRange('G2:H2').breakApart();
+  today.getRange('G2:H2').merge().setWrap(true);
+}
+
+// Upsert one session-metadata row, keyed by Date + Session. Skips if both energy
+// and notes are blank (the Log already records that the session happened).
+function _upsertSession(ss, sessionDate, sessionType, week, energy, notes) {
+  if (!energy && !notes) return;
+  const sh = _setupSessionsTab(ss);
+  const tz = Session.getScriptTimeZone();
+  const keyDate = sessionDate instanceof Date
+    ? Utilities.formatDate(sessionDate, tz, 'yyyy-MM-dd')
+    : String(sessionDate).trim();
+
+  const data = sh.getDataRange().getValues();
+  let foundRow = -1;
+  for (let i = 1; i < data.length; i++) {
+    if (!data[i][0]) continue;
+    const d = data[i][0] instanceof Date
+      ? Utilities.formatDate(data[i][0], tz, 'yyyy-MM-dd')
+      : String(data[i][0]).trim();
+    if (d === keyDate && String(data[i][1]).trim() === String(sessionType).trim()) {
+      foundRow = i + 1;
+      break;
+    }
+  }
+
+  const rowVals = [sessionDate, sessionType, week, energy, notes];
+  if (foundRow > 0) {
+    sh.getRange(foundRow, 1, 1, 5).setValues([rowVals]);
+  } else {
+    sh.appendRow(rowVals);
+    sh.getRange(sh.getLastRow(), 1).setNumberFormat('ddd d MMM yyyy');
+  }
+}
+
+// Menu action — add the Sessions feature to an EXISTING sheet without a rebuild.
+function addSessionMetadata() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const today = ss.getSheetByName('Today');
+  if (!today) { SpreadsheetApp.getUi().alert('Today tab not found.'); return; }
+  _setupSessionsTab(ss);
+  _applySessionMetaInputs(today);
+  SpreadsheetApp.getUi().alert(
+    'Session energy + notes added.\n\n' +
+    '• New "Sessions" tab: Date · Session · Week · Energy · Notes.\n' +
+    '• Today header now has "Pre-session energy" (G1) and "Session notes" (G2).\n\n' +
+    'Rate energy before you train, jot a note if you want, then tick D4 to save as ' +
+    'usual — one row per session is written automatically (skipped only if both are blank).'
+  );
+}
+
 // ── SAVE TO LOG ───────────────────────────────────────────────────────────────
 
 function saveToLog() {
@@ -524,10 +641,19 @@ function saveToLog() {
     return;
   }
 
-  const logRows = rowsToSave.map(row => [
-    sessionDate, sessionType, week,
-    row[0], row[1], row[2], row[3], row[4], row[5], row[6]
-  ]);
+  const logRows = rowsToSave.map(row => {
+    // [pending] PENDING / SKIP are placeholders, not performed sets — log them with
+    // blank weight/reps/RIR so no report can mistake them for real data. We blank
+    // only the LOGGED row, never the Today cells, so an accidental Skip/Pending pick
+    // doesn't wipe typed numbers (switch the Type back to W and they're intact).
+    const t = String(row[2]).trim().toUpperCase();
+    const ph = (t === 'PENDING' || t === 'SKIP');
+    return [
+      sessionDate, sessionType, week,
+      row[0], row[1], row[2],
+      ph ? '' : row[3], ph ? '' : row[4], ph ? '' : row[5], row[6]
+    ];
+  });
 
   const lastRow    = logSheet.getLastRow();
   const savedRange = logSheet.getRange(lastRow + 1, 1, logRows.length, 10);
@@ -540,7 +666,17 @@ function saveToLog() {
   // clears on a successful save, even if the dialog can't render (e.g. saved via
   // the checkbox before the installable trigger was set up — ui.alert would
   // otherwise throw here and skip the clear).
+  // Session-level metadata (pre-session energy + notes) → Sessions tab.
+  // Read BEFORE clearing; _upsertSession skips automatically if both are blank.
+  const sessEnergy = String(todaySheet.getRange('G1').getValue()).trim();
+  const sessNotes  = String(todaySheet.getRange('G2').getValue()).trim();
+  try { _upsertSession(ss, sessionDate, sessionType, week, sessEnergy, sessNotes); }
+  catch (err) { Logger.log('Session metadata upsert skipped: %s', err); }
+
   todaySheet.getRange('A7:H200').clearContent(); // A–G = logged data, H = Swap (user-managed)
+  todaySheet.getRange('G1').clearContent();      // pre-session energy
+  todaySheet.getRange('G2:H2').clearContent();   // session notes
+  try { _refreshPendingIndicator(ss); } catch (e) {}  // [pending] fulfil + lapse + recount
   ss.toast(`${rowsToSave.length} sets saved to Log.`, 'Saved', 4);
 
   // Compare against the program and offer to update if the structure changed.
@@ -624,6 +760,9 @@ function updateSchema() {
   today.setColumnWidth(7, 180);
   today.setColumnWidth(8, 150); // Swap
   today.setFrozenRows(6);
+
+  _applySessionMetaInputs(today);
+  _setupSessionsTab(ss);
 
   // ── Progress tab (meso-history grid) ─────────────────────────────────────────
   setupProgressTab(ss);
@@ -728,6 +867,9 @@ function setupWorkoutTracker() {
   today.setColumnWidth(7, 180);
   today.setColumnWidth(8, 150); // Swap
   today.setFrozenRows(6);
+
+  _applySessionMetaInputs(today);
+  _setupSessionsTab(ss);
 
   // ── Progress ─────────────────────────────────────────────────────────────────
   const ref = setupProgressTab(ss);
@@ -874,7 +1016,7 @@ function refreshSetVolume() {
     }
 
     const type = String(row[5]).trim().toUpperCase();
-    if (type === 'WU') continue;
+    if (type === 'WU' || type === 'PENDING' || type === 'SKIP') continue;  // [pending] placeholders aren't volume
 
     const week    = Number(row[2]);
     const session = String(row[1]).trim();
@@ -1502,7 +1644,8 @@ function refreshProgress() {
     const d = new Date(row[0]);
     if (d < mStart || d > mEnd) continue;
     if (String(row[1]).trim() !== session) continue;
-    if (String(row[5]).trim().toUpperCase() === 'WU') continue;
+    const _t = String(row[5]).trim().toUpperCase();
+    if (_t === 'WU' || _t === 'PENDING' || _t === 'SKIP') continue;  // [pending] ignore placeholders, like WU
     const week = Number(row[2]);
     const ex = String(row[3]).trim();
     if (!week || !ex) continue;

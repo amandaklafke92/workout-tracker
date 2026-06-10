@@ -33,6 +33,24 @@ Weight, Reps, RIR, Notes, Swap.
   match.
 - Swap column (H): per-row dropdown of exercises in the same muscle group — user-managed, not
   saved to the Log.
+- **Pre-session energy (G1):** 1–5 dropdown (`1 – Drained` … `5 – Primed`) — rate how you feel
+  coming in, before you log. **Session notes (G2):** free text. Both save with the D4 tick to
+  the Sessions tab and clear on save / session change. See **Sessions**.
+
+### Sessions
+
+One row per session of session-level metadata that has no home in the per-set Log. Columns:
+Date, Session, Week, Energy, Notes. Keyed by **Date + Session** (re-saving a session updates
+its row rather than adding a duplicate).
+
+- Written automatically when you save from Today (the D4 tick), using the **Pre-session energy**
+  (G1) and **Session notes** (G2) inputs in the Today header.
+- **Skipped if both energy and notes are blank** — the Log already records that the session
+  happened, so empty metadata rows aren't created.
+- Energy is stored as the full label (e.g. `3 – Okay`): the leading digit parses for analysis,
+  the word stays readable. Joins back to the Log on Date + Session (the basis for future
+  energy-vs-performance analysis).
+- Add it to an existing sheet without a rebuild via **Workout → Add Session Energy + Notes**.
 
 ### Log
 
@@ -40,7 +58,19 @@ Permanent record of every set ever logged. Columns: Date, Session, Week, Exercis
 Weight (kg), Reps, RIR, Notes. Append-only — never edit by hand.
 
 - Date format: `ddd d MMM yyyy` (e.g. "Sun 17 May 2026").
-- Type values: W (working), WU (warmup), D (drop set), RP (rest-pause / myo-reps).
+- Type values: W (working), WU (warmup), D (drop set), RP (rest-pause / myo-reps), plus PENDING / SKIP (see **Pending & Skip**).
+
+### Pending & Skip
+
+Mark an exercise you didn't do as **PENDING** (do it later this week) or **SKIP** (not this week) — set its Type cell to `PENDING`/`SKIP` and save as normal. Both are stored as a single placeholder row in the Log, keyed by Exercise + Session + Week, and **ignored by Set Volume, Best Lifts, and Progress** (they aren't real sets — treated like warm-ups).
+
+- **Numbers are stripped on save:** a PENDING/SKIP row is always written to the Log with **blank weight/reps/RIR** (notes kept), so no report can mistake it for a performed set — even one that doesn't filter by Type. This happens at save time only; your typed numbers on the Today tab are **not** touched, so an accidental Skip/Pending pick costs nothing (switch the Type back to `W` and they're still there).
+
+- **Today row 3** shows `⏳ N pending` and a checkbox (**G3**) — tick it (or **Workout → Add Pending exercises**) to load your owed exercises into a fresh grid, tagged with their *original* session + week (set structure from Programs, last weights from the Log). Log them and save as usual.
+- **Multiple home sessions:** if pendings span more than one session, you're asked which to load.
+- **PENDING is temporary:** auto-deleted the moment a real `W` row exists for its Exercise + Session + Week (however you log it), and **auto-converts to SKIP once you log a session in a later program-week** (the trigger is the Week number, not the session name — so it survives session renames between mesos). **SKIP persists** as the record that you deliberately skipped.
+- A pending placeholder never stores set count or weights — those are reconstructed on reload, so it can't be confused with real lift data.
+- Add to an existing sheet via **Workout → Setup: Pending + Skip** (no rebuild).
 
 ### Programs
 
