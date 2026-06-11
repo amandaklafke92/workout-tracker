@@ -237,8 +237,10 @@ under one date, or you'll only see half of it next time.
 
 **Unilateral exercises:** log per-side weight, one row per set.
 
-**The checkbox does nothing?** You probably skipped **Workout → Set up triggers (run once)**,
-or didn't reload the sheet after setup. Do that step and try again.
+**The checkbox does nothing — or saves but won't untick?** Same cause: the installable trigger
+isn't active. *Every* checkbox in the sheet runs through it — including saving **and** the
+auto-reset that clears the box afterwards — so if one misbehaves they all will. Run
+**Workout → Set up triggers (run once)**, approve the prompt, reload the sheet, and try again.
 
 **The Ref tab** shows the **week-by-week progression** for one session type across your
 current meso (a grid: exercises down, weeks across, `weight×reps` in each cell). It follows
