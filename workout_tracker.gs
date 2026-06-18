@@ -33,7 +33,7 @@
 // Type values: W (working), D (drop), WU (warmup), RP (rest-pause / myo-reps)
 //
 // Today meta rows (1–4): A1=Meso, A2=Session (dropdown), A3=Week,
-//           A4=Date (formula) | D4=save checkbox
+//           A4=Date (formula) | C4:F4=save label | G4=save checkbox
 // Today data rows (7+):  A=Exercise, B=Set, C=Type, D=Weight(kg), E=Reps,
 //           F=RIR, G=Notes, H=Swap (user-managed — not logged, not loaded)
 //
@@ -212,9 +212,9 @@ function handleEdit(e) {
   const sheet = e.source.getActiveSheet();
   const range = e.range;
   if (sheet.getName() === 'Today') {
-    if (range.getA1Notation() === 'D4' && e.value === 'TRUE') {
+    if (range.getA1Notation() === 'G4' && e.value === 'TRUE') {
       saveToLog();
-      sheet.getRange('D4').setValue(false);
+      sheet.getRange('G4').setValue(false);
     } else if (range.getA1Notation() === 'G3' && e.value === 'TRUE') {   // [pending] add-pending checkbox
       addPendingExercises();
       sheet.getRange('G3').setValue(false);
@@ -509,7 +509,7 @@ function _loadFromLog(todaySheet, logSheet, sessionType) {
 
 // ── SESSION METADATA (pre-session energy + notes) ─────────────────────────────
 // One row per session in a "Sessions" tab, keyed by Date + Session. Inputs live
-// in the Today header (G1 = energy dropdown, G2 = notes) and save on the same D4
+// in the Today header (G1 = energy dropdown, G2 = notes) and save on the same G4
 // tick as the sets. Kept out of the per-set Log so the data has a clean home and
 // joins back to Log on Date + Session for analysis (energy stored as "3 – Okay",
 // so the leading digit parses for correlation, the word stays readable).
@@ -563,6 +563,19 @@ function _applySessionMetaInputs(today) {
   today.getRange('G2:H2').merge().setWrap(true);
 }
 
+// Save row (row 4): a right-aligned label in C4:F4 and the save checkbox in G4 —
+// so it lines up under the energy/notes/pending rows (label left, checkbox in
+// col G) instead of a bare, easily-confused checkbox at D4. Idempotent.
+function _applySaveCheckbox(today) {
+  today.getRange('C4:F4').breakApart();
+  today.getRange('C4:F4').merge()
+    .setValue('✅ Tick to save session →')
+    .setFontWeight('bold').setFontSize(11)
+    .setFontColor('#188038').setHorizontalAlignment('right');
+  today.getRange('G4').insertCheckboxes();
+  today.getRange('G4').setNote('Tick to save session to Log');
+}
+
 // Upsert one session-metadata row, keyed by Date + Session. Skips if both energy
 // and notes are blank (the Log already records that the session happened).
 function _upsertSession(ss, sessionDate, sessionType, week, energy, notes) {
@@ -602,11 +615,14 @@ function addSessionMetadata() {
   if (!today) { SpreadsheetApp.getUi().alert('Today tab not found.'); return; }
   _setupSessionsTab(ss);
   _applySessionMetaInputs(today);
+  _applySaveCheckbox(today);
   SpreadsheetApp.getUi().alert(
     'Session energy + notes added.\n\n' +
     '• New "Sessions" tab: Date · Session · Week · Energy · Notes.\n' +
-    '• Today header now has "Pre-session energy" (G1) and "Session notes" (G2).\n\n' +
-    'Rate energy before you train, jot a note if you want, then tick D4 to save as ' +
+    '• Today header now has "Pre-session energy" (G1) and "Session notes" (G2).\n' +
+    '• Save checkbox moved to G4 (with a "Tick to save session →" label) so it lines\n' +
+    '  up under the energy/notes/pending rows.\n\n' +
+    'Rate energy before you train, jot a note if you want, then tick G4 to save as ' +
     'usual — one row per session is written automatically (skipped only if both are blank).'
   );
 }
@@ -735,12 +751,10 @@ function updateSchema() {
   today.getRange('A3:B3').setValues([['Week', '']]);
   today.getRange('A4:B4').setValues([['Date', '']]);
   today.getRange('B4').setFormula('=TODAY()').setNumberFormat('yyyy-mm-dd');
-  today.getRange('D4').insertCheckboxes();
-  today.getRange('D4').setNote('Tick to save session to Log');
   today.getRange('A1:B4').setFontSize(12).setFontWeight('bold');
 
   today.getRange('A5:G5').merge()
-    .setValue('↓  LOG YOUR SETS BELOW  |  tick D4 when done to save')
+    .setValue('↓  LOG YOUR SETS BELOW  |  tick G4 when done to save')
     .setBackground('#1a73e8').setFontColor('#ffffff')
     .setFontWeight('bold').setFontSize(12).setHorizontalAlignment('center');
 
@@ -762,6 +776,7 @@ function updateSchema() {
   today.setFrozenRows(6);
 
   _applySessionMetaInputs(today);
+  _applySaveCheckbox(today);
   _setupSessionsTab(ss);
 
   // ── Progress tab (meso-history grid) ─────────────────────────────────────────
@@ -842,12 +857,10 @@ function setupWorkoutTracker() {
   today.getRange('A3:B3').setValues([['Week', '']]);
   today.getRange('A4:B4').setValues([['Date', '']]);
   today.getRange('B4').setFormula('=TODAY()').setNumberFormat('yyyy-mm-dd');
-  today.getRange('D4').insertCheckboxes();
-  today.getRange('D4').setNote('Tick to save session to Log');
   today.getRange('A1:B4').setFontSize(12).setFontWeight('bold');
 
   today.getRange('A5:G5').merge()
-    .setValue('↓  LOG YOUR SETS BELOW  |  tick D4 when done to save')
+    .setValue('↓  LOG YOUR SETS BELOW  |  tick G4 when done to save')
     .setBackground('#1a73e8').setFontColor('#ffffff')
     .setFontWeight('bold').setFontSize(12).setHorizontalAlignment('center');
 
@@ -869,6 +882,7 @@ function setupWorkoutTracker() {
   today.setFrozenRows(6);
 
   _applySessionMetaInputs(today);
+  _applySaveCheckbox(today);
   _setupSessionsTab(ss);
 
   // ── Progress ─────────────────────────────────────────────────────────────────
@@ -994,9 +1008,12 @@ function refreshSetVolume() {
   const lastCol    = volSh.getLastColumn();
   const weekCount  = volSh.getRange(4, 3, 1, Math.max(0, lastCol - 2)).getValues()[0]
                           .filter(h => h !== '').length;
-  const muscleCount = volSh.getLastRow() - 4;
-  const muscleRows  = volSh.getRange(5, 1, muscleCount, 1).getValues()
-                           .flat().map(v => String(v).trim());
+  const allRowLabels = volSh.getRange(5, 1, Math.max(0, volSh.getLastRow() - 4), 1)
+                            .getValues().flat().map(v => String(v).trim());
+  // A 'TOTAL' row (if present) sits below the muscle groups — exclude it from the
+  // per-muscle calc and fill it with column totals after the muscle rows are written.
+  const totalOffset = allRowLabels.findIndex(l => l.toUpperCase() === 'TOTAL');
+  const muscleRows  = totalOffset >= 0 ? allRowLabels.slice(0, totalOffset) : allRowLabels;
   Logger.log('Set Volume tab: %s weeks, %s muscle groups', weekCount, muscleRows.length);
 
   // ── Log: filter by meso date range, then group by (week, session, exercise)
@@ -1067,6 +1084,18 @@ function refreshSetVolume() {
   });
 
   volSh.getRange(5, 3, output.length, weekCount).setValues(output);
+
+  // Weekly total set volume — sum each week column across all muscle groups.
+  if (totalOffset >= 0) {
+    const totals = [];
+    for (let w = 0; w < weekCount; w++) {
+      let sum = 0;
+      for (const row of output) sum += row[w];
+      totals.push(Math.round(sum * 10) / 10);
+    }
+    volSh.getRange(5 + totalOffset, 3, 1, weekCount).setValues([totals]);
+  }
+
   Logger.log('Done — wrote %s rows x %s week columns', output.length, weekCount);
   ss.toast('Set Volume refreshed', 'Done', 3);
 }
@@ -1379,6 +1408,15 @@ function setupSetVolumeTab(ss) {
       .requireValueInList(['Build', 'Maintenance', 'Not targeted'], true)
       .setAllowInvalid(false).build()
   );
+
+  // Total row directly below the muscle groups — weekly total set volume per week,
+  // summed across all muscle groups (filled by refreshSetVolume; row detected by
+  // its 'TOTAL' label, so the exact row number can shift if muscles are added).
+  const totalRowNum = 5 + MUSCLE_GROUPS.length;
+  sh.getRange(totalRowNum, 1).setValue('TOTAL');
+  sh.getRange(totalRowNum, 1, 1, 2 + weekHeaders.length)
+    .setBackground('#e8eaed').setFontWeight('bold')
+    .setBorder(true, null, null, null, null, null);
 
   sh.setColumnWidth(1, 110);
   sh.setColumnWidth(2, 110);

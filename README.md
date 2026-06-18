@@ -9,23 +9,26 @@ file. Log each training session on your phone or laptop, and the sheet automatic
 - tracks **all-time PRs** (best weight + estimated 1RM) for the lifts you care about,
 - ships with an evidence-based **volume guide** (MEV/MAV/MRV per muscle) for reference.
 
-Everything runs inside one Google Sheet you own. No accounts, no subscriptions, no data
-leaving your Google Drive.
+Everything runs inside a Google Sheet inside your own Google account so no data
+leaves your Google Drive.
 
 ---
 
 ## Who it's for
 
-This isn't a coaching app that writes the program for you. Best suited to: 
+You'll probably love this if you...
 
-- **Intermediate lifters:** you know your split and your exercises, and want to track and analyse.
-- **People who'd rather not pay a subscription** for a workout tracker.
-- **People who don't mind looking at spreadsheets**
+- Already have your own resistance training program or know how to program
+- Are already in the habit of tracking your workouts
+- Want more control over the analyses you can run on your own training data
+- Are sick and tired of paying for subscriptions
 
-It's just rows in a spreadsheet, but you can share the file with an AI agent and get deeper insights than
-any walled, proprietary app will give you.
+One tradeoff to be aware of: you're sacrificing an app's pretty user interface for a spreadsheet.
 
-> **Why I built it:** I'm sick of paying subscriptions for everything. I just need a system that makes it easy to log my workouts and run analysis on my data the way that **I** want. 
+But that also comes with another advantage: the Google Sheet is more easily shareable with AI. Give AI access to it and you can get deeper insights than any walled, proprietary app will can you. 
+
+I initially built this for myself but because I know I'm no special cookie, I figured there would be other fitness geeks like me that might also want this. If you're still reading, that's probably you.
+
 ---
 
 ## What you get: the 11 tabs
@@ -149,7 +152,7 @@ On the **Today** tab:
 2. Set the **Meso** name (B1) to match your current block in the Mesos tab. The **Date** (B4)
    auto-fills to today.
 3. Log your sets from **row 7 down**: Exercise, Set #, Type, Weight (kg), Reps, RIR, Notes.
-4. When you're done, **tick the checkbox at D4**. Your sets are appended to the Log and the
+4. When you're done, **tick the save checkbox at G4** ("✅ Tick to save session →"). Your sets are appended to the Log and the
    Today tab clears, ready for next time.
 
 You can also use **Workout → Save Today → Log** and **Workout → Load Last Session** from the

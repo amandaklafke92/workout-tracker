@@ -23,7 +23,8 @@ Where you log each session. Top rows (1–4): Meso, Session type (from the Setti
 Date (auto-fills to today). Row 7 onwards: one row per set — Exercise, Set number, Type,
 Weight, Reps, RIR, Notes, Swap.
 
-- Tick the **D4** checkbox to save the session to the Log.
+- Tick the **G4** checkbox (labelled "✅ Tick to save session →") to save the session to the
+  Log. It sits in column G, lined up under the energy / notes / pending rows.
 - Week auto-fills: finds the most recent logged week for the current session type in the Log
   and adds 1.
 - Session dropdown (B2) auto-loads the last session's exercises and weights (only when the
@@ -34,7 +35,7 @@ Weight, Reps, RIR, Notes, Swap.
 - Swap column (H): per-row dropdown of exercises in the same muscle group — user-managed, not
   saved to the Log.
 - **Pre-session energy (G1):** 1–5 dropdown (`1 – Drained` … `5 – Primed`) — rate how you feel
-  coming in, before you log. **Session notes (G2):** free text. Both save with the D4 tick to
+  coming in, before you log. **Session notes (G2):** free text. Both save with the G4 tick to
   the Sessions tab and clear on save / session change. See **Sessions**.
 
 ### Sessions
@@ -43,7 +44,7 @@ One row per session of session-level metadata that has no home in the per-set Lo
 Date, Session, Week, Energy, Notes. Keyed by **Date + Session** (re-saving a session updates
 its row rather than adding a duplicate).
 
-- Written automatically when you save from Today (the D4 tick), using the **Pre-session energy**
+- Written automatically when you save from Today (the G4 tick), using the **Pre-session energy**
   (G1) and **Session notes** (G2) inputs in the Today header.
 - **Skipped if both energy and notes are blank** — the Log already records that the session
   happened, so empty metadata rows aren't created.
@@ -66,7 +67,7 @@ Mark an exercise you didn't do as **PENDING** (do it later this week) or **SKIP*
 
 - **Numbers are stripped on save:** a PENDING/SKIP row is always written to the Log with **blank weight/reps/RIR** (notes kept), so no report can mistake it for a performed set — even one that doesn't filter by Type. This happens at save time only; your typed numbers on the Today tab are **not** touched, so an accidental Skip/Pending pick costs nothing (switch the Type back to `W` and they're still there).
 
-- **Today row 3** shows `⏳ N pending` and a checkbox (**G3**) — tick it (or **Workout → Add Pending exercises**) to load your owed exercises into a fresh grid, tagged with their *original* session + week (set structure from Programs, last weights from the Log). Log them and save as usual.
+- **Today row 3** always shows `⏳ N pending` (the label stays put even at 0, so it's never confused with the save checkbox in row 4) and a checkbox (**G3**) — tick it (or **Workout → Add Pending exercises**) to load your owed exercises into a fresh grid, tagged with their *original* session + week (set structure from Programs, last weights from the Log). Log them and save as usual.
 - **Multiple home sessions:** if pendings span more than one session, you're asked which to load.
 - **PENDING is temporary:** auto-deleted the moment a real `W` row exists for its Exercise + Session + Week (however you log it), and **auto-converts to SKIP once you log a session in a later program-week** (the trigger is the Week number, not the session name — so it survives session renames between mesos). **SKIP persists** as the record that you deliberately skipped.
 - A pending placeholder never stores set count or weights — those are reconstructed on reload, so it can't be confused with real lift data.
@@ -130,6 +131,9 @@ checkbox or via **Workout → Refresh Set Volume**.
 - **Row 4:** headers — col A `Muscle Group`, col B `Meso Target`, col C onwards `Wk 1`,
   `Wk 2`… (six week columns are created by default; add/remove to match your block).
 - **Rows 5+:** one row per muscle group (all 22, pre-filled).
+- **TOTAL row** (directly below the muscle groups): weekly **total** set volume — each week
+  column summed across all muscle groups. Filled on refresh; detected by its `TOTAL` label, so
+  it still works if you add muscle rows above it.
 - **Col B `Meso Target`** (manual): dropdown of `Build` / `Maintenance` / `Not targeted`.
   Reflects intent for the *currently selected* meso so you can distinguish "on plan" from
   "neglected." Blank = unknown / needs confirmation (distinct from Not targeted). Update

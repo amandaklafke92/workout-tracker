@@ -120,7 +120,9 @@ function _refreshPendingIndicator(ss) {
   const today = ss.getSheetByName('Today');
   if (!today) return 0;
   const n = _normalizePendings(ss);
-  today.getRange(PENDING_IND_RANGE).setValue(n > 0 ? `⏳ ${n} pending — tick to add →` : '');
+  // Label stays permanent so it's never confused with the bare save checkbox —
+  // only the count (and the call-to-action when n > 0) changes.
+  today.getRange(PENDING_IND_RANGE).setValue(n > 0 ? `⏳ ${n} pending — tick to add →` : '⏳ 0 pending');
   return n;
 }
 
@@ -176,7 +178,7 @@ function addPendingExercises() {
     today.getRange('H7:H200').clearContent();
     if (typeof applySwapDropdowns === 'function') applySwapDropdowns(today);
   }
-  ss.toast(`Loaded ${group.length} pending from ${chosen} (week ${week}). Log them and tick D4 to save.`,
+  ss.toast(`Loaded ${group.length} pending from ${chosen} (week ${week}). Log them and tick G4 to save.`,
            'Pending', 6);
 }
 
@@ -258,7 +260,7 @@ function setupPendingFeature() {
     'Pending + Skip added.\n\n' +
     '• Type cell (C7+) now offers PENDING (do later) and SKIP (not this week) — leave weight/reps blank.\n' +
     '• Today row 3 shows "⏳ N pending" with a checkbox (G3) to load them back.\n\n' +
-    'Mark an exercise PENDING/SKIP and tick D4 to save as usual. When pending work is owed, ' +
+    'Mark an exercise PENDING/SKIP and tick G4 to save as usual. When pending work is owed, ' +
     'tick G3 to load it into a fresh session (its original session + week), log it, and save. ' +
     'Unfinished pendings auto-convert to SKIP once you log a session in a later program-week.'
   );
